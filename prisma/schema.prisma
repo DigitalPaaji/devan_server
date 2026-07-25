@@ -151,7 +151,7 @@ enum ArticleStatus {
   PUBLISHED
 }
 
-model ExpertArticle {
+model ExpertArticle { 
   id       Int @id @default(autoincrement())
   expertId Int @map("expert_id")
 

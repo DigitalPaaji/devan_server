@@ -64,3 +64,28 @@ const slug = `${baseSlug}-${Date.now()}`;
     }
 }
 
+export const CreateDes = async(req:IAuth,res:Response,next:NextFunction)=>{
+  try {
+    const {title,des,color ,articleid}= req.body;
+    const expertId = Number(req.user?.id);
+    const thumbnail = req.file as Express.Multer.File || undefined; 
+   
+
+    const findArticle = await prisma.expertArticle.findUnique({where:{id:articleid}});
+    const thumbnailPath = thumbnail
+      ? `/uploads/articles/${thumbnail.filename}`
+      : null;
+const newDes= {
+  title,des,color,image: thumbnailPath
+}
+
+
+
+
+
+
+  } catch (error) {
+    
+  }
+}
+
