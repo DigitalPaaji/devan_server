@@ -1,0 +1,62 @@
+import "dotenv/config";
+import express from "express";
+import cookieParser from "cookie-parser"
+import { connectDatabase ,pool } from "./config/database"
+import { SubAdminIndex } from "./subAdminindex";
+import errorHandler from "./helper/errorHandler";
+import { connectRedis } from "./helper/redisServer";
+import cors from "cors"
+import path from "path"
+import { ExpertsIndex } from "./ExpertsIndex";
+const app = express()
+app.use(cors({
+    origin: process.env.FRONTEND_URL!.split(","),
+    credentials: true,               
+    methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+
+  })) 
+  app.use(cookieParser())
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use( 
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"),
+ {
+    maxAge: "7d",              
+    etag: true,               
+    lastModified: true,        
+    immutable: true            
+  })
+);
+
+SubAdminIndex(app)
+ExpertsIndex(app)
+
+
+
+app.use(errorHandler)
+
+
+
+
+
+const PORT = process.env.PORT || 8001;
+
+const startServer = async (): Promise<void> => {
+  try {
+    await connectDatabase();
+await connectRedis()
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server startup failed:", error);
+    process.exit(1);
+  }
+};
+
+void startServer();
+
