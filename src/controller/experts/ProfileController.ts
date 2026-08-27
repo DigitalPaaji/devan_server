@@ -22,7 +22,7 @@ try {
     }
 
 
-  const expert = await Expert.findOne({email: email.trim().toLowerCase()});
+  const expert = await Expert.findOne({email: email});
 
 
 
