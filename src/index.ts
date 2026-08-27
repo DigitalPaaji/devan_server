@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import type { Request, Response }  from "express";
 import cookieParser from "cookie-parser"
 
 import { SubAdminIndex } from "./subAdminindex";
@@ -34,6 +35,10 @@ app.use(
   })
 );
 
+app.get("/ping",async(req:Request,res:Response)=>{
+return res.status(200).send("Pong")
+})
+
 SubAdminIndex(app)
 ExpertsIndex(app)
 UserIndex(app)
@@ -47,20 +52,7 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 8001;
 
-// const startServer = async (): Promise<void> => {
-//   try {
-//     await connectDatabase();
-// await connectRedis()
-//     app.listen(PORT, () => {
-//       console.log(`Server running at http://localhost:${PORT}`);
-//     });
-//   } catch (error) {
-//     console.error("Server startup failed:", error);
-//     process.exit(1);
-//   }
-// };
 
-// void startServer();
 
 mongoose.connect(process.env.DATABASE_URL!).then(async()=>{
   try {
