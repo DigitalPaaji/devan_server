@@ -29,14 +29,14 @@ try {
    if (!expert) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message: "Invalid email or password pexpert",
       });
     }
 
     if (!expert.status) {
       return res.status(403).json({
         success: false,
-        message: "Your expert account is inactive",
+        message: "Your expert account is inactive ",
       });
     }
 
@@ -48,7 +48,7 @@ try {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message: "Invalid email or password paswww",
       });
     }
 
