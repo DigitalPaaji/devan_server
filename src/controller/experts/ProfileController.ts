@@ -22,7 +22,7 @@ try {
     }
 
 
-  const expert = await Expert.findOne({email: email});
+  const expert = await Expert.findOne({email:email});
 
 
 
@@ -30,6 +30,7 @@ try {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password pexpert",
+        email,password
       });
     }
 
