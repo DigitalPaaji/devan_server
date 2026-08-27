@@ -22,62 +22,64 @@ try {
     }
 
 
-  const expert = await Expert.findOne({email:email});
+  // const expert = await Expert.findOne({email:email});
+  const expert = await Expert.find();
 
 
 
-   if (!expert) {
+  //  if (!expert) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password pexpert",
-        email,password
+        email,password,
+        expert
       });
-    }
+    // }
 
-    if (!expert.status) {
-      return res.status(403).json({
-        success: false,
-        message: "Your expert account is inactive ",
-      });
-    }
+//     if (!expert.status) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Your expert account is inactive ",
+//       });
+//     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      expert.password
-    );
+//     const isPasswordValid = await bcrypt.compare(
+//       password,
+//       expert.password
+//     );
 
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password paswww",
-      });
-    }
+//     if (!isPasswordValid) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid email or password paswww",
+//       });
+//     }
 
   
- const secret = process.env.JWT_SECRET!;
- const token = JWT.sign(
-      {
-        role: "expert",
-      },
-      secret,
-      {
-        subject: String(expert._id),
-        expiresIn: "7d",
-        issuer: "devan-api",
-        audience: "devan-expert",
-      }
-    );
+//  const secret = process.env.JWT_SECRET!;
+//  const token = JWT.sign(
+//       {
+//         role: "expert",
+//       },
+//       secret,
+//       {
+//         subject: String(expert._id),
+//         expiresIn: "7d",
+//         issuer: "devan-api",
+//         audience: "devan-expert",
+//       }
+//     );
 
 
 
-const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("expert",token, {
-     httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-}) 
+// const isProduction = process.env.NODE_ENV === "production";
+//     res.cookie("expert",token, {
+//      httpOnly: true,
+//       secure: isProduction,
+//       sameSite: isProduction ? "none" : "lax",
+//       maxAge: 7 * 24 * 60 * 60 * 1000,
+//       path: "/",
+// }) 
 
 
 
@@ -85,11 +87,11 @@ const isProduction = process.env.NODE_ENV === "production";
 
 
 
-  return res.status(200).json({
-      success: true,
-      message: "Expert logged in successfully",
-      expert:expert,
-    });
+//   return res.status(200).json({
+//       success: true,
+//       message: "Expert logged in successfully",
+//       expert:expert,
+//     });
 
 
 } catch (error) {
