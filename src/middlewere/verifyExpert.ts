@@ -1,7 +1,7 @@
 
 import type { NextFunction, Request, Response } from "express";
 import JWT, { JsonWebTokenError, JwtPayload, TokenExpiredError } from "jsonwebtoken";
-import { prisma } from "../config/database";
+import Expert from "../model/expertModel";
 const JWT_ISSUER = "devan-api";
 const JWT_AUDIENCE = "devan-expert";
 
@@ -36,31 +36,18 @@ export const VerifyExpert = async(req:Request,res:Response,next:NextFunction)=>{
         message: "Invalid authentication token",
       });
     }
-    const superAdminId = Number(decoded.sub);
-if (!Number.isInteger(superAdminId)) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid authentication token",
-      });
-    }
+    const ExpertId = decoded.sub;
 
-const superAdmin = await prisma.expert.findUnique({
-      where: {
-        id: superAdminId,
-      },
-      select: {
-        id: true,
-        email: true,
-      },
-    });
 
-  if (!superAdmin) {
+const expert = await Expert.findById(ExpertId).select("fullname email image phone gender status lastLoginAt");
+
+  if (!expert) {
       return res.status(401).json({
         success: false,
         message: "Expert account not found",
       });
     }
-   (req as any).user = superAdmin;
+   (req as any).expert = expert;
 next();
 
     } catch (error) {

@@ -1,0 +1,218 @@
+import mongoose, { Schema, model, Document } from "mongoose";
+
+
+
+const ContentSchema = new Schema(
+  {
+    title: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    des: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    color: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    image: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+  },
+  {
+    _id: true,
+  }
+);
+
+
+export interface IExpertArticle extends Document {
+  expertId: mongoose.Types.ObjectId;
+
+  title: string;
+  slug: string;
+
+  shortDescription?: string | null;
+
+  content: {
+    title?: string | null;
+    des?: string | null;
+    color?: string | null;
+    image?: string | null;
+  }[];
+
+  thumbnail?: string | null;
+
+  category?: "Sterilization Basics"| "Steam Sterilization"| "ETO Sterilization" | "Plasma Sterilization" | "CSSD Management" | 
+"Infection Control" | "Standards & Guidelines" | "Case Studies";
+
+  tags: string[];
+homepage:Boolean;
+  status: "DRAFT" | "REJECTED" | "PUBLISHED";
+
+  rejectionReason?: string | null;
+
+  views: number;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ExpertArticleSchema = new Schema<IExpertArticle>(
+  {
+
+
+    expertId: {
+      type: Schema.Types.ObjectId,
+      ref: "Expert",
+      required: [true, "Expert ID is required"],
+      index: true,
+    },
+
+    /* ---------------------------------
+       Basic Information
+    ---------------------------------- */
+
+    title: {
+      type: String,
+      required: [true, "Article title is required"],
+      trim: true,
+      minlength: [3, "Title must be at least 3 characters"],
+      maxlength: [200, "Title cannot exceed 200 characters"],
+    },
+
+    slug: {
+      type: String,
+      required: [true, "Slug is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+
+    shortDescription: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Short description cannot exceed 500 characters"],
+      default: null,
+    },
+
+    /* ---------------------------------
+       Article Content
+    ---------------------------------- */
+
+    content: {
+      type: [ContentSchema],
+      default: [],
+    },
+
+    /* ---------------------------------
+       Thumbnail
+    ---------------------------------- */
+
+    thumbnail: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    /* ---------------------------------
+       Category
+    ---------------------------------- */
+
+    category: {
+      type: String,
+      trim: true,
+      maxlength: [30, "Category cannot exceed 30 characters"],
+      enum:["Sterilization Basics","Steam Sterilization","ETO Sterilization","Plasma Sterilization","CSSD Management",
+"Infection Control","Standards & Guidelines","Case Studies"
+],
+      default: null,
+      index: true,
+    },
+
+    /* ---------------------------------
+       Tags
+    ---------------------------------- */
+
+    tags: {
+      type: [String],
+      default: [],
+      set: (tags: string[]) =>
+        tags
+          .map((tag) => tag.trim().toLowerCase())
+          .filter(Boolean),
+    },
+
+    /* ---------------------------------
+       Article Status
+    ---------------------------------- */
+
+    status: {
+      type: String,
+      enum: {
+        values: ["DRAFT", "REJECTED", "PUBLISHED"],
+        message: "Invalid article status",
+      },
+      default: "PUBLISHED",
+      index: true,
+    },
+
+    /* ---------------------------------
+       Rejection Reason
+    ---------------------------------- */
+
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+   homepage:{
+type:Boolean,
+default:false
+    },
+
+    views: {
+      type: Number,
+      default: 0,
+      min: [0, "Views cannot be negative"],
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+
+
+ExpertArticleSchema.index({
+  expertId: 1,
+  status: 1,
+});
+
+ExpertArticleSchema.index({
+  category: 1,
+  status: 1,
+});
+
+ExpertArticleSchema.index({
+  createdAt: -1,
+});
+
+
+
+const ExpertArticle = model<IExpertArticle>(
+  "ExpertArticle",
+  ExpertArticleSchema
+);
+
+export default ExpertArticle;

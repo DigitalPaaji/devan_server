@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../../config/database";
 import bcrypt from "bcryptjs";
+import Expert from "../../model/expertModel";
 
 
 export const createExpert = async (
@@ -50,18 +50,20 @@ export const createExpert = async (
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPhone = phone?.trim() || null;
 
-    /* Check unique email and phone */
-    const existingExpert = await prisma.expert.findFirst({
-      where: {
-        OR: [
-          { email: normalizedEmail },
-          ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
-        ],
-      },
-      select: {
-        email: true,
-        phone: true,
-      },
+
+  // where: {
+  //       OR: [
+  //         { email: normalizedEmail },
+  //         ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+  //       ],
+  //     },
+
+    const existingExpert = await Expert.findOne({
+    $or:[
+{      email:normalizedEmail},
+{      phone:normalizedPhone}
+    ]
+    
     });
 
     if (existingExpert) {
@@ -136,8 +138,7 @@ export const createExpert = async (
       ? `/uploads/expert/${req.file.filename}`
       : null;
 
-    const expert = await prisma.expert.create({
-      data: {
+    const expert = await Expert.create({
         fullname: fullname.trim(),
         email: normalizedEmail,
         password: hashedPassword,
@@ -165,10 +166,7 @@ export const createExpert = async (
         city: city?.trim() || null,
         state: state?.trim() || null,
         linkedinUrl: linkedinUrl?.trim() || null,
-      },
-      omit: {
-        password: true,
-      },
+     
     });
 
     return res.status(201).json({
@@ -183,75 +181,80 @@ export const createExpert = async (
   }
 };
 
-export const getAllExpert = async(req:Request,res:Response,next:NextFunction)=>{
-    try {
-      const page = Math.max(Number(req.query.page) || 1, 1);
+export const getAllExpert = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Pagination
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
     const limit = Math.min(
       Math.max(Number(req.query.limit) || 15, 1),
       100
     );
 
-     const skip = (page - 1) * limit;
- const search =
+    const skip = (page - 1) * limit;
+
+    // Search
+    const search =
       typeof req.query.search === "string"
         ? req.query.search.trim()
         : "";
-const where = search
-      ? {
-          OR: [
-            {
-              fullname: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              email: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              phone: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }
-      : {};
- const [users, totalUsers] = await prisma.$transaction([
-      prisma.expert.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: "desc",
-        },
-        omit: {
-          password: true,
-        },
-      }),
 
-      prisma.expert.count({
-        where,
-      }),
+    // Build MongoDB filter
+    const filter: Record<string, any> = {};
+
+    if (search) {
+      filter.$or = [
+        {
+          fullname: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          email: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          phone: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // Fetch experts + count in parallel
+    const [experts, totalExperts] = await Promise.all([
+      Expert.find(filter)
+        .select("fullname email image phone gender status lastLoginAt")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Expert.countDocuments(filter),
     ]);
- return res.status(200).json({
+
+    return res.status(200).json({
       success: true,
-      message: "Users fetched successfully",
-      users,
+      message: "Experts fetched successfully",
+
+      experts,
+
       pagination: {
-        totalUsers,
-        totalPages: Math.ceil(totalUsers / limit),
+        totalExperts,
+        totalPages: Math.ceil(totalExperts / limit),
         currentPage: page,
         limit,
       },
     });
-
-    
-
-} catch (error) {
-        next(error)
-    }
-}
+  } catch (error) {
+    next(error);
+  }
+};

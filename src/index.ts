@@ -1,13 +1,15 @@
 import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser"
-import { connectDatabase ,pool } from "./config/database"
+
 import { SubAdminIndex } from "./subAdminindex";
 import errorHandler from "./helper/errorHandler";
 import { connectRedis } from "./helper/redisServer";
 import cors from "cors"
 import path from "path"
 import { ExpertsIndex } from "./ExpertsIndex";
+import mongoose from "mongoose";
+import { UserIndex } from "./UserIndex";
 const app = express()
 app.use(cors({
     origin: process.env.FRONTEND_URL!.split(","),
@@ -34,7 +36,7 @@ app.use(
 
 SubAdminIndex(app)
 ExpertsIndex(app)
-
+UserIndex(app)
 
 
 app.use(errorHandler)
@@ -45,18 +47,30 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 8001;
 
-const startServer = async (): Promise<void> => {
+// const startServer = async (): Promise<void> => {
+//   try {
+//     await connectDatabase();
+// await connectRedis()
+//     app.listen(PORT, () => {
+//       console.log(`Server running at http://localhost:${PORT}`);
+//     });
+//   } catch (error) {
+//     console.error("Server startup failed:", error);
+//     process.exit(1);
+//   }
+// };
+
+// void startServer();
+
+mongoose.connect(process.env.DATABASE_URL!).then(async()=>{
   try {
-    await connectDatabase();
-await connectRedis()
-    app.listen(PORT, () => {
+    await connectRedis()
+        app.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("Server startup failed:", error);
+        console.error("Server startup failed:", error);
     process.exit(1);
   }
-};
-
-void startServer();
+})
 

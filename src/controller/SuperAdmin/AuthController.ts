@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../../config/database";
 import bcrypt from "bcryptjs"
 import JWT from "jsonwebtoken"
 import { sendOtpMail } from "../../helper/sendOtpMail";
 import redisClient from "../../helper/redisServer";
+import SuperAdmin from "../../model/superAdminModel";
 
 
 export const createSuperAdmin = async(req:Request,res:Response,next:NextFunction)=>{
@@ -46,13 +46,7 @@ export const createSuperAdmin = async(req:Request,res:Response,next:NextFunction
       return;
     }
 
-const existingSuperAdmin = await prisma.superAdmin.findUnique({
-    where:{
-        email,
-    }, select: {
-        id: true,
-      },
-})
+const existingSuperAdmin = await SuperAdmin.findOne({email})
  if (existingSuperAdmin) {
       res.status(409).json({
         success: false,
@@ -63,20 +57,7 @@ const existingSuperAdmin = await prisma.superAdmin.findUnique({
 
     const hashpass = await bcrypt.hash(password,10)
 
-  const superAdmin = await prisma.superAdmin.create({
-      data: {
-        name,
-        email,
-        password:hashpass
-      },
-       select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+  const superAdmin = await SuperAdmin.create({ name,email,password:hashpass});
     res.status(201).json({
       success: true,
       message: "Super Admin created successfully",
@@ -91,7 +72,7 @@ export const loginSuperAdmin = async(req:Request,res:Response,next:NextFunction)
     try {
         const {email,password}=  req.body;
         if (!email || !password) { throw new Error("Email and password are required"); }
-        const superAdmin = await prisma.superAdmin.findUnique({where:{email}});
+        const superAdmin = await SuperAdmin.findOne({email});
        
 
    if(!superAdmin){
@@ -109,7 +90,7 @@ export const loginSuperAdmin = async(req:Request,res:Response,next:NextFunction)
 const JWT_AUDIENCE = "devan-super-admin";
  const secret = process.env.JWT_SECRET!;
   const token = JWT.sign({},secret,{
-subject: String(superAdmin.id),
+subject: String(superAdmin._id),
       expiresIn: "7d",
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
@@ -181,7 +162,7 @@ interface ISuperAuth extends Request{
 export const getSuperAdmin= async(req:ISuperAuth,res:Response,next:NextFunction)=>{
   try {
     const superAdmin = req.superAdmin
-    return res.status(200).json(superAdmin)
+    return res.status(200).json({superAdmin,success:true})
   } catch (error) {
     next(error)
   }

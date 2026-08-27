@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../../config/database";
 import { removeImage } from "../../helper/deleteImage";
 import bcrypt from "bcryptjs"
+import User from "../../model/userModel";
 
 
 
@@ -27,13 +27,8 @@ export const createUser = async(req:Request,res:Response,next:NextFunction)=>{
         message: "Full name, email and password are required",
       });
     }
-const existingEmail = await prisma.user.findUnique({
-      where: {
+const existingEmail = await User.findOne({
         email: email.trim().toLowerCase(),
-      },
-      select: {
-        id: true,
-      },
     });
 
  if (existingEmail) {
@@ -50,14 +45,7 @@ const existingEmail = await prisma.user.findUnique({
 
 
      if (phone?.trim()) {
-      const existingPhone = await prisma.user.findUnique({
-        where: {
-          phone: phone.trim(),
-        },
-        select: {
-          id: true,
-        },
-      });
+      const existingPhone = await User.findOne({phone: phone.trim()});
 
       if (existingPhone) {
         if (imagePath) {
@@ -72,8 +60,8 @@ const existingEmail = await prisma.user.findUnique({
     }
 
  const hashedPassword = await bcrypt.hash(password, 12);
-const user = await prisma.user.create({
-      data: {
+const user = await User.create({
+     
         fullname: fullname.trim(),
         email: email.trim().toLowerCase(),
         password: hashedPassword,
@@ -91,20 +79,6 @@ const user = await prisma.user.create({
         dateOfBirth: dateOfBirth
           ? new Date(dateOfBirth)
           : null,
-      },
-      select: {
-        id: true,
-        fullname: true,
-        email: true,
-        phone: true,
-        image: true,
-        status: true,
-        gender: true,
-        dateOfBirth: true,
-        address: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
   return res.status(201).json({
@@ -129,64 +103,72 @@ const user = await prisma.user.create({
     }
 }
 
-export const getAllUser = async(req:Request,res:Response,next:NextFunction)=>{
-try {
-      const page = Math.max(Number(req.query.page) || 1, 1);
+export const getAllUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Pagination
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
     const limit = Math.min(
       Math.max(Number(req.query.limit) || 15, 1),
       100
     );
 
-     const skip = (page - 1) * limit;
- const search =
+    const skip = (page - 1) * limit;
+
+    // Search
+    const search =
       typeof req.query.search === "string"
         ? req.query.search.trim()
         : "";
-const where = search
-      ? {
-          OR: [
-            {
-              fullname: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              email: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              phone: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }
-      : {};
- const [users, totalUsers] = await prisma.$transaction([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: "desc",
-        },
-        omit: {
-          password: true,
-        },
-      }),
 
-      prisma.user.count({
-        where,
-      }),
+    // MongoDB filter
+    const filter: Record<string, any> = {};
+
+    if (search) {
+      filter.$or = [
+        {
+          fullname: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          email: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          phone: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // Get users and total count
+    const [users, totalUsers] = await Promise.all([
+      User.find(filter)
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      User.countDocuments(filter),
     ]);
- return res.status(200).json({
+
+    return res.status(200).json({
       success: true,
       message: "Users fetched successfully",
+
       users,
+
       pagination: {
         totalUsers,
         totalPages: Math.ceil(totalUsers / limit),
@@ -194,10 +176,7 @@ const where = search
         limit,
       },
     });
-
-    
-
-} catch (error) {
-    next(error)
-}
-}
+  } catch (error) {
+    next(error);
+  }
+};

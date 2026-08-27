@@ -1,14 +1,14 @@
 
 import type { NextFunction, Request, Response } from "express";
 import JWT, { JsonWebTokenError, JwtPayload, TokenExpiredError } from "jsonwebtoken";
-import SuperAdmin from "../model/superAdminModel";
+import User from "../model/userModel";
 const JWT_ISSUER = "devan-api";
-const JWT_AUDIENCE = "devan-super-admin";
+const JWT_AUDIENCE = "devan-user";
 
 
-export const VerifySuperAdmin = async(req:Request,res:Response,next:NextFunction)=>{
+export const VerifyUser = async(req:Request,res:Response,next:NextFunction)=>{
     try {
-        const token = req.cookies?.super_admin;
+        const token = req.cookies?.user_token;
           if (!token) {
       return res.status(401).json({
         success: false,
@@ -36,18 +36,27 @@ export const VerifySuperAdmin = async(req:Request,res:Response,next:NextFunction
         message: "Invalid authentication token",
       });
     }
-    const superAdminId = decoded.sub;
+    const userId = decoded.sub;
 
 
-const superAdmin = await SuperAdmin.findById(superAdminId).select("email name");
+const user = await User.findById(userId).select("fullname email image phone gender status lastLoginAt");
 
-  if (!superAdmin) {
+
+  if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Super admin account not found",
+        message: "User account not found",
       });
     }
-   (req as any).superAdmin = superAdmin;
+
+if(!user.status){
+ return res.status(401).json({
+        success: false,
+        message: "User status not Active",
+      });
+}
+
+   (req as any).user = user;
 next();
 
     } catch (error) {
