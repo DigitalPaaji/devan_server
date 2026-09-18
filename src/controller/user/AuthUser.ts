@@ -4,6 +4,190 @@ import User from "../../model/userModel";
 import bcrypt from "bcryptjs"
 import JWT from "jsonwebtoken"
 import { removeImage } from "../../helper/deleteImage";
+import { sendOtpMail } from "../../helper/sendOtpMail";
+import redisClient from "../../helper/redisServer";
+
+
+export const SignupUser =async(req:Request,res:Response,next:NextFunction) =>{
+  try {
+const {fullname,email,phone,password,gender,dateOfBirth,address} = req.body
+  
+     if (!fullname?.trim() || !email?.trim() || !password) {
+         
+    
+          return res.status(400).json({
+            success: false,
+            message: "Full name, email and password are required",
+          });
+        }
+    const existingEmail = await User.findOne({
+            email: email.trim().toLowerCase(),
+        });
+    
+     if (existingEmail) {
+         
+          return res.status(409).json({
+            success: false,
+            message: "User with this email already exists",
+          });
+        }
+      if (phone?.trim()) {
+      const existingPhone = await User.findOne({phone: phone.trim()});
+
+      if (existingPhone) {
+        return res.status(409).json({
+          success: false,
+          message: "User with this phone number already exists",
+        });
+      }
+    }
+
+
+
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+
+     await sendOtpMail(email, otp);
+
+     const storeData =JSON.stringify({fullname,email,phone,password,gender,dateOfBirth,address,otp })
+     await redisClient.set(`devan-email:${email}`, storeData, {
+      EX: 5 * 60,
+      });
+
+
+
+       return  res.status(200).json({success:true,message:"otp send "})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+
+
+
+export const verifyOtpUser = async (req: Request,res: Response,next: NextFunction) => {
+  try {
+    const { useremail, userotp } = req.body;
+
+    if (!useremail?.trim() || !userotp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
+
+    if (!/^\d{6}$/.test(String(userotp))) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP must contain 6 digits",
+      });
+    }
+
+    const email = useremail.trim().toLowerCase();
+
+    const getOtp = await redisClient.get(`devan-email:${email}`);
+
+    if (!getOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired or has already been used",
+      });
+    }
+
+    const {
+      fullname,
+      email: storedEmail,
+      phone,
+      password,
+      gender,
+      dateOfBirth,
+      address,
+      otp,
+    } = JSON.parse(getOtp);
+
+    if (String(otp) !== String(userotp)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    // Delete OTP after successful verification
+    await redisClient.del(`devan-email:${email}`);
+
+    // Check again to prevent duplicate account creation
+    const existingUser = await User.findOne({
+      email: storedEmail.toLowerCase(),
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User with this email already exists",
+      });
+    }
+
+    const hashpass = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      fullname,
+      email: storedEmail.toLowerCase(),
+      phone,
+      password: hashpass,
+      gender:gender?gender:null,
+      dateOfBirth,
+      address,
+    });
+
+    const secret = process.env.JWT_SECRET!;
+
+    const token = JWT.sign(
+      {
+        role: "user",
+      },
+      secret,
+      {
+        subject: String(user._id),
+        expiresIn: "7d",
+        issuer: "devan-api",
+        audience: "devan-user",
+      }
+    );
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("user_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
  export const loginUser = async(req:Request,res:Response,next:NextFunction) =>{
     try {
@@ -85,7 +269,9 @@ interface IAuth extends Request{
 
 export const verifyuserDetail = async(req:IAuth,res:Response,next:NextFunction) =>{
     try {
-const user = req.user;
+ const userId = req.user._id;
+        
+        const user = await User.findById(userId);
 
 return res.status(200).json({success:true,user})
         
@@ -170,7 +356,7 @@ if(!user){
 
 user.fullname=fullname
 user.phone=phone
-user.gender=gender
+user.gender=gender.toLowerCase()
 user.dateOfBirth=dateOfBirth
 user.address=address
 
@@ -216,6 +402,8 @@ return res.status(200).json({success:true,message:"User Updated",user})
  next(error)
   }
  }
+
+ 
 
 
 

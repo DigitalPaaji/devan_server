@@ -39,11 +39,18 @@ export const getNews = async(req:Request,res:Response,next:NextFunction)=>{
         const limit= Number(req.query.limit) || 20;
         const skip = limit * (page - 1);
         const search = typeof req.query.search === "string" ? req.query.search.trim(): "";
+        const category = typeof req.query.category === "string" ? req.query.category.trim(): "";
 
 
         const filter:any  ={
            rejected:false 
         }
+
+  
+          if(category){
+          filter.category=category
+          }
+
 
         if(search){
         filter.$or = [

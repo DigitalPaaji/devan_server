@@ -66,7 +66,7 @@ get single news   Get
 jobs for homepage  GET
 /api/v1/user/jobs/homepage 
 
-
+ 
 
 Jobs page GET
 /api/v1/user/jobs/all   ? page={}&limit={}&search={}&jobtype={}&workmode={};   
@@ -107,3 +107,4 @@ yt page GET
 
 /api/v1/user/learning/yt/all   ? page={}&limit={}&search={} 
 
+  

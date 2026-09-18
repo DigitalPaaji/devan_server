@@ -7,6 +7,7 @@ import EventsRoutes from "./routes/SuperAdmin/EventsRoutes"
 import NewsRoutes from "./routes/SuperAdmin/NewsRoutes"
 import jobsRoutes from "./routes/SuperAdmin/jobsRoutes"
 import ArticleRoutes from "./routes/SuperAdmin/ArticleRoutes"
+import ContentRoutes from "./routes/SuperAdmin/ContentRoutes"
 
 export const SubAdminIndex= (app : Application) : void => {
 
@@ -18,6 +19,7 @@ app.use("/api/v1/superadmin/events",EventsRoutes)
 app.use("/api/v1/superadmin/news",NewsRoutes)
 app.use("/api/v1/superadmin/jobs",jobsRoutes)
 app.use("/api/v1/superadmin/learning",ArticleRoutes)
+app.use("/api/v1/superadmin/content",ContentRoutes)
 
 
 

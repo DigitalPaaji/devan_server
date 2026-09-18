@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 
 
-
+                                                                                                                                                    
  export const sendOtpMail = async(email :string, otp :string)=>{
   try {
     const mailOptions = {

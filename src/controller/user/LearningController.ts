@@ -3,7 +3,7 @@ import redisClient from "../../helper/redisServer";
 import ExpertArticle from "../../model/experArticalModel";
 import { ExpertEducation } from "../../model/expertEducation";
 
-
+         
 export const getHomeArticle = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const key ="devan-article"
@@ -35,12 +35,16 @@ export const getArticles = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const page = Number(req.query.page) || 1
         const limit= Number(req.query.limit) || 20;
+        const category= req.query.category || "";
         const skip = limit * (page - 1);
         const search = typeof req.query.search === "string" ? req.query.search.trim(): "";
 
 
         const filter:any  ={
             status:"PUBLISHED"
+        }
+        if(category){
+          filter.category=category
         }
 
         if(search){
@@ -66,6 +70,7 @@ export const getArticles = async(req:Request,res:Response,next:NextFunction)=>{
       ];
         }
          
+        
 
 
            const [articles,totalArticles] = await Promise.all([
@@ -156,28 +161,21 @@ export const getYtvideos = async(req:Request,res:Response,next:NextFunction)=>{
         const page = Number(req.query.page) || 1
         const limit= Number(req.query.limit) || 20;
         const skip = limit * (page - 1);
-        const search = typeof req.query.search === "string" ? req.query.search.trim(): "";
+        const category = typeof req.query.category === "string" ? req.query.category.trim(): "";
 
 
         const filter:any  ={
             status:"PUBLISHED"
         }
 
-        if(search){
-        filter.$or = [
-        {
-          category: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-      ];
-        }
+        if(category){
+        filter.category=category
+      }
          
 
 
            const [ytvideos,totalYTvideos] = await Promise.all([
-                      ExpertEducation.find({homepage:true,status:"PUBLISHED"}).select("expertId  category ytlink ").populate("expertId","fullname designation")
+                      ExpertEducation.find(filter).select("expertId  category ytlink ").populate("expertId","fullname designation")
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -207,3 +205,12 @@ export const getYtvideos = async(req:Request,res:Response,next:NextFunction)=>{
         next(error)
     }
 }
+
+
+
+
+
+
+
+
+
