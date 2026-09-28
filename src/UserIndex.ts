@@ -5,6 +5,7 @@ import eventRoutes from "./routes/User/eventRoutes"
 import newsRoutes from "./routes/User/newsRoutes"
 import JobRoutes from "./routes/User/JobRoutes"
 import ArticleRoutes from "./routes/User/ArticleRoutes"
+import champions from "./routes/User/champions"
 
 export const UserIndex= (app : Application) : void => {
 
@@ -15,5 +16,6 @@ export const UserIndex= (app : Application) : void => {
     app.use("/api/v1/user/news",newsRoutes)
     app.use("/api/v1/user/jobs",JobRoutes)
     app.use("/api/v1/user/learning",ArticleRoutes)
-
+    app.use("/api/v1/user/champions",champions)
+    
 }

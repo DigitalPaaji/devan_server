@@ -9,6 +9,7 @@ const JWT_AUDIENCE = "devan-user";
 export const VerifyUser = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const token = req.cookies?.user_token;
+        
           if (!token) {
       return res.status(401).json({
         success: false,

@@ -6,6 +6,7 @@ import JWT from "jsonwebtoken"
 import { removeImage } from "../../helper/deleteImage";
 import { sendOtpMail } from "../../helper/sendOtpMail";
 import redisClient from "../../helper/redisServer";
+import mongoose from "mongoose";
 
 
 export const SignupUser =async(req:Request,res:Response,next:NextFunction) =>{
@@ -404,8 +405,92 @@ return res.status(200).json({success:true,message:"User Updated",user})
  }
 
  
+ export const toggleArticles=  async(req:IAuth,res:Response,next:NextFunction) =>{
+  try {
+    const userId = req.user._id;
+    const articleId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isSaved = user.savedArticles.some(
+      (item: mongoose.Types.ObjectId) =>
+        item.toString() === articleId.toString()
+    );
+
+    if (isSaved) {
+      // Remove article
+      user.savedArticles = user.savedArticles.filter(
+        (item: mongoose.Types.ObjectId) =>
+          item.toString() !== articleId.toString()
+      );
+    } else {
+      
+      user.savedArticles.push(
+        new mongoose.Types.ObjectId(articleId.toString())
+      );
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      saved: !isSaved,
+      message: isSaved
+        ? "Article removed from saved articles"
+        : "Article saved successfully",
+      savedArticles: user.savedArticles,
+    });
+} catch (error) {
+  next(error)
+}
+
+ }
 
 
+
+ export const getSaveArticle = async (
+  req: IAuth,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId)
+      .populate({
+        path: "savedArticles",
+        select:
+          "expertId title slug shortDescription thumbnail category",
+        populate: {
+          path: "expertId",
+          select: "fullname designation",
+        },
+      })
+      .select("savedArticles");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Saved articles fetched successfully",
+      articles: user.savedArticles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 

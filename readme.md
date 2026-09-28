@@ -13,6 +13,10 @@ user Update PUT
 /api/v1/user/auth/update
 {fullname,phone,gender,dateOfBirth,address,image,resume} 
 
+
+
+
+
 user Logout  GET
 /api/v1/user/auth/logout
 
@@ -24,7 +28,6 @@ get single weeklye question if user login GET
 /api/v1/user/weeklyquestion/get-user
 
 
-
 user submit weeklye question  POST
 /api/v1/user/weeklyquestion/submit-answer  
 {answer,questionId}
@@ -32,7 +35,7 @@ user submit weeklye question  POST
 
 
 
-///////////////Events
+/////////    Events
 event for homepage  GET
 /api/v1/user/events/homepage   
 
@@ -46,8 +49,8 @@ status = "PUBLISHED" || "COMPLETED"
 get single Event   Get
 /api/v1/user/events/get/{eventslug}
 
-
-///////////////////////// News
+ 
+/////////////////////////     News
 news for homepage  GET
 
 /api/v1/user/news/homepage 
@@ -60,7 +63,7 @@ get single news   Get
 /api/v1/user/news/get/{newsslug}
 
 
-///////////////////////// Jobs
+//////////////   Jobs
 
 
 jobs for homepage  GET
@@ -84,7 +87,7 @@ apply for job  PUT
 
 
 
-///////////////////////// Articlesss////////////////
+///////////////////////// Articlesss  ////////////////
 
 articles for homepage  GET
 /api/v1/user/learning/article/homepage 
@@ -99,7 +102,7 @@ get single article      Get
 
 
 
-/////////////////   Yt vidoes ////////
+/////////////////    Yt vidoes   ////////
 yt for homepage  GET
 /api/v1/user/learning/yt/homepage
 

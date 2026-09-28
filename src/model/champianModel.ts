@@ -1,9 +1,9 @@
-import { Schema, Types, model, Document } from "mongoose";
+import mongoose,{ Schema, Types, model, Document } from "mongoose";
 
-export type ChampionType = "WEEK" | "MONTH" | "YEAR";
+export type ChampionType = "WEEK" | "MONTH" | "YEAR" | "hall_of_fame";
 
 export interface IChampion extends Document {
-  userId: Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   type: ChampionType;
 
   challengeId?: Types.ObjectId | null;
@@ -25,14 +25,14 @@ export interface IChampion extends Document {
 const championSchema = new Schema<IChampion>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
     type: {
       type: String,
-      enum: ["WEEK", "MONTH", "YEAR"],
+      enum: ["WEEK", "MONTH", "YEAR","hall_of_fame"],
       required: true,
     },
 
@@ -72,7 +72,7 @@ const championSchema = new Schema<IChampion>(
 
     periodEnd: {
       type: Date,
-      required: true,
+     
     },
 
     isActive: {

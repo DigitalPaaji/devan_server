@@ -1,5 +1,5 @@
 import express from "express"
-import { getUserDetails, loginUser, LogoutUser, SignupUser, updateDetails, verifyOtpUser, verifyuserDetail } from "../../controller/user/AuthUser";
+import { getSaveArticle, getUserDetails, loginUser, LogoutUser, SignupUser, toggleArticles, updateDetails, verifyOtpUser, verifyuserDetail } from "../../controller/user/AuthUser";
 import { VerifyUser } from "../../middlewere/userVerify";
 import { userProfileUpload } from "../../helper/UploadUserProfile";
 
@@ -21,6 +21,8 @@ route.put("/update",VerifyUser,userProfileUpload.fields([
     {name:"resume",maxCount:1},
 ]),updateDetails as any)
 
+route.get("/article/:id",VerifyUser,toggleArticles as any)
+route.get("/article-save",VerifyUser,getSaveArticle as any)
 
 
 

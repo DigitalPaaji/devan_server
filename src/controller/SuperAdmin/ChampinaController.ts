@@ -4,6 +4,7 @@ import User from "../../model/userModel";
 import WeeklyChallenge from "../../model/ExpertQuestionModel";
 import WeeklyAnswer from "../../model/ChallengeAnswerSchema";
 import { Champion, ChampionType } from "../../model/champianModel";
+import mongoose from "mongoose";
 
 
 
@@ -128,4 +129,89 @@ champions,
     next(error)
 }
 
+}
+
+
+export const getAllChamUser = async(req:Request,res:Response,next:NextFunction)=>{
+try {
+
+
+  const weeklychampoin = await Champion.find({type:"WEEK"}).populate("userId")
+const Monthlychampoin = await Champion.find({type:"MONTH"}).populate("userId")
+const yearlychampoin = await Champion.find({type:"YEAR"}).populate("userId")
+const HOFchampoin = await Champion.find({type:"hall_of_fame"}).populate("userId")
+
+
+
+  return res.status(200).json({
+success:true,
+weeklychampoin,
+Monthlychampoin,
+yearlychampoin,
+HOFchampoin,
+
+  })
+
+
+
+
+} catch (error) {
+    next(error)
+}
+
+}
+
+export const addHallOfFame= async(req: Request, res: Response,next: NextFunction)=>{
+  try {
+    const { id } = req.body;
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id",
+      });
+    }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id",
+      });
+    }
+
+
+
+
+
+
+  const periodStart = new Date();
+
+
+
+
+    const userId = new mongoose.Types.ObjectId(id);
+
+
+ const  allreadyExist =  await Champion.findOne({ type: "hall_of_fame",
+      userId:userId})
+
+if(allreadyExist){
+  return res.status(404).json({success:false,message:"Hall Of Fame Allready exist",userId})
+}
+
+
+   await Champion.create({
+      type: "hall_of_fame",
+      userId:userId,
+      periodStart,
+    });
+  return res.status(201).json({
+      success: true,
+      message: "User added to Hall of Fame successfully",
+    
+    });
+
+
+  } catch (error) {
+    next(error)
+  }
 }
